@@ -1,0 +1,38 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides: unicorn
+# Required-Start: postgresql nginx
+# Required-Stop: 
+# Should-Start: 
+# Should-Stop: 
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start and stop unicorn
+# Description: UNICORN
+### END INIT INFO
+set -e
+APP_ROOT=<%= current_path %>
+PID=$APP_ROOT/tmp/pids/unicorn.pid
+RAILS_ENV=<%= fetch(:rails_env) %>
+BUNDLE_GEMFILE=$APP_ROOT/Gemfile
+CMD="/usr/local/rvm/wrappers/<%= fetch(:application) %>/bundle exec unicorn_rails -c $APP_ROOT/config/unicorn/<%= fetch(:rails_env) %>.rb -E <%= fetch(:rails_env) %> -D"
+action="$1"
+set -u
+
+cd $APP_ROOT || exit 1
+
+sig () {
+        test -s "$PID" && kill -$1 `cat $PID`
+}
+
+case $action in
+start)
+        sig 0 && echo >&2 "Already running" && exit 0
+        $CMD
+        ;;
+stop)
+        sig QUIT && exit 0
+        echo >&2 "Not running"
+        ;;
+esac
+
